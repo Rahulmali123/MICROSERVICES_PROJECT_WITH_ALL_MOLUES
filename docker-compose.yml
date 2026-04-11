@@ -1,0 +1,121 @@
+version: "3.9"
+
+services:
+
+  # =========================
+  # COMPANY DATABASE
+  # =========================
+  company-db:
+    image: postgres:16
+    container_name: company-db
+    environment:
+      POSTGRES_DB: company
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - company-data:/var/lib/postgresql/data
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
+  # JOB DATABASE
+  # =========================
+  job-db:
+    image: postgres:16
+    container_name: job-db
+    environment:
+      POSTGRES_DB: job
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    volumes:
+      - job-data:/var/lib/postgresql/data
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
+  # COMPANY MICROSERVICE
+  # =========================
+  companyms:
+    build: ./companyms
+    container_name: companyms
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://company-db:5432/company
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - company-db
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
+  # JOB MICROSERVICE
+  # =========================
+  jobms:
+    build: ./jobms
+    container_name: jobms
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://job-db:5432/job
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - job-db
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
+  # REVIEW MICROSERVICE (H2)
+  # =========================
+  reviewms:
+    build: ./reviewms
+    container_name: reviewms
+    ports:
+      - "8083:8083"
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
+  # PGADMIN
+  # =========================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - company-db
+      - job-db
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+# =========================
+# NETWORK
+# =========================
+networks:
+  ms-net:
+    driver: bridge
+
+# =========================
+# VOLUMES
+# =========================
+volumes:
+  company-data:
+  job-data:
