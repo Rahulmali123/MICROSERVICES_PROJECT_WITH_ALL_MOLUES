@@ -2,6 +2,7 @@ package com.embarx.jobms.Job;
 
 import java.util.List;
 
+import com.embarx.jobms.Job.dto.JobWithCompanyDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,7 +44,8 @@ public class JobController {
 	}
 
 	@GetMapping("/")
-	public ResponseEntity<List<Job>> findAll() {
+	public ResponseEntity<List<JobWithCompanyDTO>> findAll() {
+
 		return  ResponseEntity.ok(jobService.findAll());
 	}
 
