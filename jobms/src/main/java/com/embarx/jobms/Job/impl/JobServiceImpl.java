@@ -3,12 +3,16 @@ package com.embarx.jobms.Job.impl;
 import com.embarx.jobms.Job.Job;
 import com.embarx.jobms.Job.JobRepo;
 import com.embarx.jobms.Job.JobService;
-import com.embarx.jobms.Job.dto.JobWithCompanyDTO;
+import com.embarx.jobms.Job.dto.JobDTO;
 import com.embarx.jobms.Job.external.Company;
+import com.embarx.jobms.Job.external.Review;
+import com.embarx.jobms.Job.mapper.JobMapper;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,32 +33,44 @@ public class JobServiceImpl implements JobService {
 
 	// own JobWithCompanyDtoCreated
 
-	private JobWithCompanyDTO convertToDto(Job job) {
+	private JobDTO convertToDto(Job job) {
 
-		JobWithCompanyDTO dto = new JobWithCompanyDTO();
-		dto.setJob(job);
-
+		Company company;
+		List<Review> reviews;
 
 		try {
-			Company company = restTemplate.getForObject(
+			// 🔹 COMPANY CALL
+			company = restTemplate.getForObject(
 					"http://companyms:8081/companies/getById/" + job.getCompanyId(),
 					Company.class
 			);
 
-			dto.setCompany(company);
+			// 🔹 REVIEW CALL
+			ResponseEntity<List<Review>> reviewResponse =
+					restTemplate.exchange(
+							"http://reviewms:8083/reviews?companyId=" + job.getCompanyId(),
+							HttpMethod.GET,
+							null,
+							new ParameterizedTypeReference<List<Review>>() {}
+					);
+
+			reviews = reviewResponse.getBody();
 
 		} catch (Exception e) {
 
 			System.out.println("ERROR: " + e.getMessage());
 
-			Company fallback = new Company();
-			fallback.setId(job.getCompanyId());
-			fallback.setName("Company not available");
+			// 🔹 fallback company
+			company = new Company();
+			company.setId(job.getCompanyId());
+			company.setName("Company not available");
 
-			dto.setCompany(fallback);
+			// 🔹 fallback reviews
+			reviews = List.of();  // ✅ empty list (best practice)
 		}
 
-		return dto; // ✅ FIXED
+		// ✅ FINAL MAPPING
+		return JobMapper.mapToJobWithCompanyDto(job, company, reviews);
 	}
 
 	@Override
@@ -82,7 +98,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public List<JobWithCompanyDTO> findAll() {
+	public List<JobDTO> findAll() {
 
 		List<Job> jobs = jobRepo.findAll();
 
@@ -92,7 +108,7 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public JobWithCompanyDTO findJobWithCompanyById(Long id) {
+	public JobDTO findJobWithCompanyById(Long id) {
 
 		Job job = jobRepo.findById(id).orElse(null);
 

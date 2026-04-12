@@ -1,6 +1,6 @@
 package com.embarx.jobms.Job;
 
-import com.embarx.jobms.Job.dto.JobWithCompanyDTO;
+import com.embarx.jobms.Job.dto.JobDTO;
 
 import java.util.List;
 
@@ -9,9 +9,9 @@ public interface JobService
 	
 	public void createJob(Job job);
 
-	public List<JobWithCompanyDTO> findAll();
+	public List<JobDTO> findAll();
 
-	JobWithCompanyDTO findJobWithCompanyById(Long id);
+	JobDTO findJobWithCompanyById(Long id);
 	
 	 boolean deleteById(Long id);
 	 

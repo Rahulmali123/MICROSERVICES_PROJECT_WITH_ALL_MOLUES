@@ -2,7 +2,7 @@ package com.embarx.jobms.Job;
 
 import java.util.List;
 
-import com.embarx.jobms.Job.dto.JobWithCompanyDTO;
+import com.embarx.jobms.Job.dto.JobDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,15 +44,15 @@ public class JobController {
 	}
 
 	@GetMapping("/")
-	public ResponseEntity<List<JobWithCompanyDTO>> findAll() {
+	public ResponseEntity<List<JobDTO>> findAll() {
 
 		return  ResponseEntity.ok(jobService.findAll());
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<JobWithCompanyDTO> getById(@PathVariable Long id) {
+	public ResponseEntity<JobDTO> getById(@PathVariable Long id) {
 
-		JobWithCompanyDTO dto = jobService.findJobWithCompanyById(id);
+		JobDTO dto = jobService.findJobWithCompanyById(id);
 
 		if (dto != null) {
 			return ResponseEntity.ok(dto);
