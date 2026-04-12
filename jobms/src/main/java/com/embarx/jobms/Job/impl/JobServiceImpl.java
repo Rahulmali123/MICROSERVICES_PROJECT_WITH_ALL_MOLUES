@@ -19,11 +19,11 @@ public class JobServiceImpl implements JobService {
 
 	JobRepo jobRepo;
 
+	private final RestTemplate restTemplate;
 
-
-	public JobServiceImpl(JobRepo jobRepo) {
-		super();
+	public JobServiceImpl(JobRepo jobRepo, RestTemplate restTemplate) {
 		this.jobRepo = jobRepo;
+		this.restTemplate = restTemplate;
 	}
 
 
@@ -34,7 +34,6 @@ public class JobServiceImpl implements JobService {
 		JobWithCompanyDTO dto = new JobWithCompanyDTO();
 		dto.setJob(job);
 
-		RestTemplate  restTemplate=new RestTemplate();
 
 		try {
 			Company company = restTemplate.getForObject(
@@ -93,9 +92,15 @@ public class JobServiceImpl implements JobService {
 	}
 
 	@Override
-	public Job findByJobId(Long id) {
+	public JobWithCompanyDTO findJobWithCompanyById(Long id) {
+
 		Job job = jobRepo.findById(id).orElse(null);
-		return job;
+
+		if (job == null) {
+			return null;
+		}
+
+		return convertToDto(job);
 	}
 
 	@Override

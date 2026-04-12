@@ -6,7 +6,15 @@
         <option value="$PROJECT_DIR$/jobms/pom.xml" />
         <option value="$PROJECT_DIR$/companyms/pom.xml" />
         <option value="$PROJECT_DIR$/reviewms/pom.xml" />
+        <option value="$PROJECT_DIR$/serive-reg/pom.xml" />
+        <option value="$PROJECT_DIR$/service-reg/target/maven-archiver/pom.properties" />
+        <option value="$PROJECT_DIR$/service-reg/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/service-reg/target/maven-archiver/pom.properties" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="21" project-jdk-type="JavaSDK">

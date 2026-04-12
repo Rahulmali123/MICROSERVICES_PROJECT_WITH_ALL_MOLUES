@@ -3,6 +3,18 @@ version: "3.9"
 services:
 
   # =========================
+  # EUREKA SERVER
+  # =========================
+  eureka-server:
+    build: ./service-reg
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
   # COMPANY DATABASE
   # =========================
   company-db:
@@ -39,6 +51,24 @@ services:
     restart: unless-stopped
 
   # =========================
+  # REVIEW DATABASE (FIXED)
+  # =========================
+  review-db:
+    image: postgres:16
+    container_name: review-db
+    environment:
+      POSTGRES_DB: review
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5435:5432"
+    volumes:
+      - review-data:/var/lib/postgresql/data
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
   # COMPANY MICROSERVICE
   # =========================
   companyms:
@@ -50,9 +80,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://company-db:5432/company
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       - company-db
+      - eureka-server
     networks:
       - ms-net
     restart: unless-stopped
@@ -69,21 +101,32 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://job-db:5432/job
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       - job-db
+      - eureka-server
     networks:
       - ms-net
     restart: unless-stopped
 
   # =========================
-  # REVIEW MICROSERVICE (H2)
+  # REVIEW MICROSERVICE
   # =========================
   reviewms:
     build: ./reviewms
     container_name: reviewms
     ports:
       - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://review-db:5432/review
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - review-db
+      - eureka-server
     networks:
       - ms-net
     restart: unless-stopped
@@ -102,20 +145,16 @@ services:
     depends_on:
       - company-db
       - job-db
+      - review-db
     networks:
       - ms-net
     restart: unless-stopped
 
-# =========================
-# NETWORK
-# =========================
 networks:
   ms-net:
     driver: bridge
 
-# =========================
-# VOLUMES
-# =========================
 volumes:
   company-data:
   job-data:
+  review-data:

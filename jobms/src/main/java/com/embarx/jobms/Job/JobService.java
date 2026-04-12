@@ -10,8 +10,8 @@ public interface JobService
 	public void createJob(Job job);
 
 	public List<JobWithCompanyDTO> findAll();
-	
-	public Job findByJobId(Long id);
+
+	JobWithCompanyDTO findJobWithCompanyById(Long id);
 	
 	 boolean deleteById(Long id);
 	 

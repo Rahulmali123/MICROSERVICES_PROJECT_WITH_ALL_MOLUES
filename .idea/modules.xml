@@ -6,6 +6,8 @@
       <module fileurl="file://$PROJECT_DIR$/companyms/companyms.iml" filepath="$PROJECT_DIR$/companyms/companyms.iml" />
       <module fileurl="file://$PROJECT_DIR$/jobms/jobms.iml" filepath="$PROJECT_DIR$/jobms/jobms.iml" />
       <module fileurl="file://$PROJECT_DIR$/reviewms/reviewms.iml" filepath="$PROJECT_DIR$/reviewms/reviewms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/serive-reg/serive-reg.iml" filepath="$PROJECT_DIR$/serive-reg/serive-reg.iml" />
+      <module fileurl="file://$PROJECT_DIR$/service-reg/service-reg.iml" filepath="$PROJECT_DIR$/service-reg/service-reg.iml" />
     </modules>
   </component>
 </project>
