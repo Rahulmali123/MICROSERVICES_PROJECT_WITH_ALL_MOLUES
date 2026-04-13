@@ -3,6 +3,18 @@ version: "3.9"
 services:
 
   # =========================
+  # ZIPKIN (TRACING SERVER)
+  # =========================
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - ms-net
+    restart: unless-stopped
+
+  # =========================
   # EUREKA SERVER
   # =========================
   eureka-server:
@@ -51,7 +63,7 @@ services:
     restart: unless-stopped
 
   # =========================
-  # REVIEW DATABASE (FIXED)
+  # REVIEW DATABASE
   # =========================
   review-db:
     image: postgres:16
@@ -82,9 +94,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       - company-db
       - eureka-server
+      - zipkin
     networks:
       - ms-net
     restart: unless-stopped
@@ -103,9 +117,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       - job-db
       - eureka-server
+      - zipkin
     networks:
       - ms-net
     restart: unless-stopped
@@ -124,9 +140,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       - review-db
       - eureka-server
+      - zipkin
     networks:
       - ms-net
     restart: unless-stopped
@@ -150,10 +168,16 @@ services:
       - ms-net
     restart: unless-stopped
 
+# =========================
+# NETWORK
+# =========================
 networks:
   ms-net:
     driver: bridge
 
+# =========================
+# VOLUMES
+# =========================
 volumes:
   company-data:
   job-data:
