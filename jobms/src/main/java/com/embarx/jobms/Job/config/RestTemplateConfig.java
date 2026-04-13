@@ -1,4 +1,5 @@
 package com.embarx.jobms.Job.config;
+/*
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,4 +28,4 @@ public class RestTemplateConfig {
                 .setReadTimeout(Duration.ofSeconds(3))
                 .build();
     }
-}
+}*/

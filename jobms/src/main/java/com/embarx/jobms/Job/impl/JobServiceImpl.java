@@ -3,35 +3,35 @@ package com.embarx.jobms.Job.impl;
 import com.embarx.jobms.Job.Job;
 import com.embarx.jobms.Job.JobRepo;
 import com.embarx.jobms.Job.JobService;
+import com.embarx.jobms.Job.clients.CompanyClients;
+import com.embarx.jobms.Job.clients.ReviewClient;
 import com.embarx.jobms.Job.dto.JobDTO;
 import com.embarx.jobms.Job.external.Company;
 import com.embarx.jobms.Job.external.Review;
 import com.embarx.jobms.Job.mapper.JobMapper;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
 
-
-
 @Service
 public class JobServiceImpl implements JobService {
 
-	JobRepo jobRepo;
+	private static final Logger log = LoggerFactory.getLogger(JobServiceImpl.class);
 
-	private final RestTemplate restTemplate;
+	private final JobRepo jobRepo;
+	private final CompanyClients companyClients;
+	private final ReviewClient reviewClient;
 
-	public JobServiceImpl(JobRepo jobRepo, RestTemplate restTemplate) {
+	public JobServiceImpl(JobRepo jobRepo,
+						  CompanyClients companyClients,
+						  ReviewClient reviewClient) {
 		this.jobRepo = jobRepo;
-		this.restTemplate = restTemplate;
+		this.companyClients = companyClients;
+		this.reviewClient = reviewClient;
 	}
-
-
-	// own JobWithCompanyDtoCreated
 
 	private JobDTO convertToDto(Job job) {
 
@@ -39,70 +39,60 @@ public class JobServiceImpl implements JobService {
 		List<Review> reviews;
 
 		try {
-			// 🔹 COMPANY CALL
-			company = restTemplate.getForObject(
-					"http://companyms:8081/companies/getById/" + job.getCompanyId(),
-					Company.class
-			);
+			// ✅ Feign call - Company
+			company = companyClients.getCompany(job.getCompanyId());
 
-			// 🔹 REVIEW CALL
-			ResponseEntity<List<Review>> reviewResponse =
-					restTemplate.exchange(
-							"http://reviewms:8083/reviews?companyId=" + job.getCompanyId(),
-							HttpMethod.GET,
-							null,
-							new ParameterizedTypeReference<List<Review>>() {}
-					);
+			// ✅ Feign call - Review
+			reviews = reviewClient.getReviews(job.getCompanyId());
 
-			reviews = reviewResponse.getBody();
+			if (reviews == null) {
+				reviews = List.of();
+			}
 
 		} catch (Exception e) {
 
-			System.out.println("ERROR: " + e.getMessage());
+			log.error("Error while calling external services", e);
 
-			// 🔹 fallback company
+			// fallback
 			company = new Company();
 			company.setId(job.getCompanyId());
 			company.setName("Company not available");
 
-			// 🔹 fallback reviews
-			reviews = List.of();  // ✅ empty list (best practice)
+			reviews = List.of();
 		}
 
-		// ✅ FINAL MAPPING
 		return JobMapper.mapToJobWithCompanyDto(job, company, reviews);
 	}
 
 	@Override
-	public void createJob(Job job)
-	{
-		 this.jobRepo.save(job);
+	public void createJob(Job job) {
+		jobRepo.save(job);
 	}
-	
+
 	@Override
 	public boolean updateJob(Job job, Long id) {
-	    Optional<Job> jobOptional = jobRepo.findById(id);
-	    if (jobOptional.isPresent()) {
-	        Job existingJob = jobOptional.get();
+		Optional<Job> jobOptional = jobRepo.findById(id);
 
-	        existingJob.setTitle(job.getTitle());
-	        existingJob.setDescription(job.getDescription());
-	        existingJob.setMinSalary(job.getMinSalary());
-	        existingJob.setMaxSalary(job.getMaxSalary());
-	        existingJob.setLocation(job.getLocation());
+		if (jobOptional.isPresent()) {
+			Job existingJob = jobOptional.get();
 
-	        jobRepo.save(existingJob);
-	        return true;
-	    }
-	    return false;
+			existingJob.setTitle(job.getTitle());
+			existingJob.setDescription(job.getDescription());
+			existingJob.setMinSalary(job.getMinSalary());
+			existingJob.setMaxSalary(job.getMaxSalary());
+			existingJob.setLocation(job.getLocation());
+
+			jobRepo.save(existingJob);
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
 	public List<JobDTO> findAll() {
-
-		List<Job> jobs = jobRepo.findAll();
-
-		return jobs.stream()
+		return jobRepo.findAll()
+				.stream()
 				.map(this::convertToDto)
 				.toList();
 	}
@@ -125,8 +115,8 @@ public class JobServiceImpl implements JobService {
 			jobRepo.deleteById(id);
 			return true;
 		} catch (Exception e) {
+			log.error("Error deleting job", e);
 			return false;
 		}
-
 	}
 }
